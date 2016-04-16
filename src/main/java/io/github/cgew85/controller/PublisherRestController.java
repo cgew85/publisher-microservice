@@ -1,7 +1,6 @@
 package io.github.cgew85.controller;
 
 import io.github.cgew85.domain.Info;
-import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -10,12 +9,14 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 
 /**
  * Created by cgew85 on 13.04.2016.
@@ -46,8 +47,6 @@ public class PublisherRestController {
                     "{\"layout.xml\":\"" + layoutXml.replace(" ", "+")
                             + "\", \"data.xml\":\"" + new String(dataXml.replace(" ", "+").getBytes(), "UTF-8") + "\"}");
             stringEntity.setContentType("application/json");
-            final StringWriter writer = new StringWriter();
-            IOUtils.copy(stringEntity.getContent(), writer, "UTF-8");
             httpPost.setEntity(stringEntity);
         } catch(Exception e) {
             jsonObject.put("id", -1);
@@ -71,7 +70,29 @@ public class PublisherRestController {
     @RequestMapping(value = "/v0/info", method = RequestMethod.GET)
     public Info info(@RequestParam(value = "address") String address, @RequestParam(value = "port") String port,
                      @RequestParam(value="id") String id) {
-        return new Info("processId", "errorStatus", "result", "message", "finished");
+        // Create info object for the worst case, only to be rewritten in case of success
+        final Info info = new Info("-1", "", "", "", "");
+        final CloseableHttpClient closeableHttpClient = HttpClients.createMinimal();
+        final HttpGet httpGet = new HttpGet("http://" + address + ":" + port + "/v0/status/" + id);
+        try(final CloseableHttpResponse closeableHttpResponse = closeableHttpClient.execute(httpGet)) {
+            final BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(closeableHttpResponse.getEntity().getContent()));
+            final StringBuilder stringBuilder = new StringBuilder();
+            String temp;
+            while((temp = bufferedReader.readLine()) != null) {
+                stringBuilder.append(temp);
+            }
+            final JSONParser jsonParser = new JSONParser();
+            final JSONObject jsonObject = (JSONObject) jsonParser.parse(stringBuilder.toString());
+            info.setProcessId(id);
+            info.setErrorStatus((String)jsonObject.get("errorstatus"));
+            info.setResult((String)jsonObject.get("result"));
+            info.setMessage((String)jsonObject.get("message"));
+            info.setFinished((String)jsonObject.get("finished"));
+        } catch(Exception e) {
+            return info;
+        }
+
+        return info;
     }
 
     @RequestMapping(value = "/v0/download", method = RequestMethod.GET)
