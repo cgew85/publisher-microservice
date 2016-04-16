@@ -33,7 +33,7 @@ public class PublisherRestController {
      *
      * @param address -   The address of the publishing server.
      * @param port    -   The port of the publishing server.
-     * @return -   A string object containing the http status code.
+     * @return        -   A string object containing the http status code.
      */
     @RequestMapping(value = "/v0/available", method = RequestMethod.GET)
     public String available(@RequestParam(value = "address") String address, @RequestParam(value = "port") String port) {
@@ -171,7 +171,7 @@ public class PublisherRestController {
      * @param address -   The address of the publisher.
      * @param port    -   The port of the publisher.
      * @param id      -   The id for the publishing process.
-     * @return -   A string object containing the http status code.
+     * @return        -   A string object containing the http status code.
      */
     @RequestMapping(value = "/v0/delete", method = RequestMethod.GET)
     public String delete(@RequestParam(value = "address") String address, @RequestParam(value = "port") String port,
