@@ -2,6 +2,7 @@ package io.github.cgew85.controller;
 
 import io.github.cgew85.domain.Info;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -75,24 +76,28 @@ public class PublisherRestController {
         final CloseableHttpClient closeableHttpClient = HttpClients.createMinimal();
         final HttpGet httpGet = new HttpGet("http://" + address + ":" + port + "/v0/status/" + id);
         try(final CloseableHttpResponse closeableHttpResponse = closeableHttpClient.execute(httpGet)) {
-            final BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(closeableHttpResponse.getEntity().getContent()));
-            final StringBuilder stringBuilder = new StringBuilder();
-            String temp;
-            while((temp = bufferedReader.readLine()) != null) {
-                stringBuilder.append(temp);
+            if(closeableHttpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                final BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(closeableHttpResponse.getEntity().getContent()));
+                final StringBuilder stringBuilder = new StringBuilder();
+                String temp;
+                while((temp = bufferedReader.readLine()) != null) {
+                    stringBuilder.append(temp);
+                }
+                final JSONParser jsonParser = new JSONParser();
+                final JSONObject jsonObject = (JSONObject) jsonParser.parse(stringBuilder.toString());
+                info.setProcessId(id);
+                info.setErrorStatus((String)jsonObject.get("errorstatus"));
+                info.setResult((String)jsonObject.get("result"));
+                info.setMessage((String)jsonObject.get("message"));
+                info.setFinished((String)jsonObject.get("finished"));
+
+                return info;
+            } else {
+                return info;
             }
-            final JSONParser jsonParser = new JSONParser();
-            final JSONObject jsonObject = (JSONObject) jsonParser.parse(stringBuilder.toString());
-            info.setProcessId(id);
-            info.setErrorStatus((String)jsonObject.get("errorstatus"));
-            info.setResult((String)jsonObject.get("result"));
-            info.setMessage((String)jsonObject.get("message"));
-            info.setFinished((String)jsonObject.get("finished"));
         } catch(Exception e) {
             return info;
         }
-
-        return info;
     }
 
     @RequestMapping(value = "/v0/download", method = RequestMethod.GET)
