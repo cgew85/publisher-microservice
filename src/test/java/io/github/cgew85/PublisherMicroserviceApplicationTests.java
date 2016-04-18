@@ -1,5 +1,7 @@
 package io.github.cgew85;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.SpringApplicationConfiguration;
@@ -11,7 +13,7 @@ import org.springframework.test.context.web.WebAppConfiguration;
 @WebAppConfiguration
 public class PublisherMicroserviceApplicationTests {
 
-	@Test
+    @Test
 	public void contextLoads() {
 	}
 
